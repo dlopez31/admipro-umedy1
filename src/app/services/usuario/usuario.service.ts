@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Usuario } from 'src/app/models/usuario.model';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { URL_SEVICIOS } from 'src/app/config/config';
-import { map } from 'rxjs/operators';
+import { map, catchError } from 'rxjs/operators';
 import swal from 'sweetalert';
 import { Router } from '@angular/router';
-import { pipe } from 'rxjs';
+import { throwError } from 'rxjs';
 import { SubirArchivoService } from '../subir-archivo/subir-archivo.service';
 
 
@@ -69,7 +69,16 @@ export class UsuarioService {
       .pipe(map( (resp: any) => {
          this.guardarStorage( resp.id, resp.token, resp.usuario );
         return true;
-      } ));
+      } ))
+      .pipe
+     (
+     catchError((error: HttpErrorResponse) => {
+       if ( error.status === 400 ) {
+        swal('Calve incorrecta', usuario.email, 'error');
+       }
+        return throwError(error.message || 'server error');
+                                            })
+     );
    }
 
    crearUsuario( usuario: Usuario) {
@@ -94,8 +103,10 @@ export class UsuarioService {
       url += '?token=' + this.token;
       return this.http.put( url, usuario )
         .pipe(map( (resp: any) => {
-          const usuarioDB: Usuario = resp.usuario;
-          this.guardarStorage( usuarioDB._id, this.token, usuarioDB);
+          if ( usuario._id === this.usuario._id ) {
+            const usuarioDB: Usuario = resp.usuario;
+            this.guardarStorage( usuarioDB._id, this.token, usuarioDB);
+          }
           swal('Usuario actualizado', usuario.nombre, 'success');
           return true;
         }));
@@ -112,4 +123,29 @@ export class UsuarioService {
       console.log( resp );
     });
    }
+
+   cargarUsuarios(desde: number = 0) {
+      const url = URL_SEVICIOS + '/usuario?desde=' + desde;
+      return this.http.get(url);
+   }
+
+   buscarUsuario( termino: string ) {
+    const url = URL_SEVICIOS + '/busqueda/coleccion/usuarios/' + termino;
+    return this.http.get(url)
+      .pipe(
+        map( (resp: any) => resp.usuarios ));
+  }
+
+  borrarUsuario( id: string ) {
+    let url = URL_SEVICIOS + '/usuario/' + id;
+    url += '?token=' + this.token;
+    return this.http.delete(url)
+      .pipe(
+        map( (resp: any) => {
+          swal('Usuario borrado', 'El usuario a sido eliminado correctamente', 'success');
+          return true;
+        }));
+  }
+
+
 }
