@@ -3,7 +3,6 @@ import { Usuario } from 'src/app/models/usuario.model';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { URL_SEVICIOS } from 'src/app/config/config';
 import { map, catchError } from 'rxjs/operators';
-import swal from 'sweetalert';
 import { Router } from '@angular/router';
 import { throwError } from 'rxjs';
 import { SubirArchivoService } from '../subir-archivo/subir-archivo.service';

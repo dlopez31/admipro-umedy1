@@ -18,6 +18,14 @@
     width: 70px;
 }
 
+.w200 {
+    width: 80%;
+}
+
+.w100 {
+    width: 40%;
+}
+
 .oculto {
     display: none;
 }
