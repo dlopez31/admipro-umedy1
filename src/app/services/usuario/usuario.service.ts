@@ -6,6 +6,7 @@ import { map, catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { throwError } from 'rxjs';
 import { SubirArchivoService } from '../subir-archivo/subir-archivo.service';
+import swal from 'sweetalert';
 
 
 @Injectable({
@@ -15,6 +16,7 @@ export class UsuarioService {
 
   usuario: Usuario;
   token: string;
+  menu: any[] = [];
 
   constructor( public http: HttpClient,
                public router: Router,
@@ -30,19 +32,23 @@ export class UsuarioService {
      if ( localStorage.getItem('token')) {
        this.token = localStorage.getItem('token');
        this.usuario = JSON.parse( localStorage.getItem('usuario'));
+       this.menu = JSON.parse( localStorage.getItem('menu'));
      } else {
        this.token = '';
        this.usuario = null;
+       this.menu = [];
      }
    }
 
-   guardarStorage( id: string, token: string, usuario: Usuario) {
+   guardarStorage( id: string, token: string, usuario: Usuario, menu: any ) {
     localStorage.setItem('id', id );
     localStorage.setItem('token', token );
     localStorage.setItem('usuario', JSON.stringify(usuario) );
+    localStorage.setItem('menu', JSON.stringify(menu) );
 
     this.usuario = usuario;
     this.token = token;
+    this.menu = menu;
 
    }
 
@@ -51,7 +57,7 @@ export class UsuarioService {
 
      return this.http.post( url, { token })
      .pipe(map ( (resp: any ) => {
-       this.guardarStorage( resp.id, resp.token, resp.usuario );
+       this.guardarStorage( resp.id, resp.token, resp.usuario, resp.menu );
         return true;
       }));
    }
@@ -66,17 +72,14 @@ export class UsuarioService {
       const url = URL_SEVICIOS + '/login';
       return this.http.post( url, usuario)
       .pipe(map( (resp: any) => {
-         this.guardarStorage( resp.id, resp.token, resp.usuario );
+         this.guardarStorage( resp.id, resp.token, resp.usuario, resp.menu  );
         return true;
       } ))
-      .pipe
-     (
-     catchError((error: HttpErrorResponse) => {
-       if ( error.status === 400 ) {
-        swal('Calve incorrecta', usuario.email, 'error');
-       }
-        return throwError(error.message || 'server error');
-                                            })
+      .pipe (
+        catchError((err: HttpErrorResponse) => {
+         swal('Error en el login', err.error.mensaje, 'error');
+        return throwError(err);
+        })
      );
    }
 
@@ -86,14 +89,22 @@ export class UsuarioService {
       .pipe(map( (resp: any) => {
         swal('Usuario creado', usuario.email, 'success');
         return resp.usuario;
-      }));
+      }))
+      .pipe (
+        catchError((err: HttpErrorResponse) => {
+          swal(err.error.message, err.error.errors.message, 'error');
+        return throwError(err);
+        })
+     );
    }
 
    logout() {
      this.token = '';
      this.usuario = null;
+     this.menu = [];
      localStorage.removeItem('token');
      localStorage.removeItem('usuario');
+     localStorage.removeItem('menu');
      this.router.navigate(['/login']);
    }
 
@@ -104,11 +115,17 @@ export class UsuarioService {
         .pipe(map( (resp: any) => {
           if ( usuario._id === this.usuario._id ) {
             const usuarioDB: Usuario = resp.usuario;
-            this.guardarStorage( usuarioDB._id, this.token, usuarioDB);
+            this.guardarStorage( usuarioDB._id, this.token, usuarioDB, this.menu );
           }
           swal('Usuario actualizado', usuario.nombre, 'success');
           return true;
-        }));
+        }))
+        .pipe (
+          catchError((err: HttpErrorResponse) => {
+            swal(err.error.message, err.error.errors.message, 'error');
+          return throwError(err);
+          })
+       );
    }
 
    cambiarImagen( archivo: File, id: string) {
@@ -116,7 +133,7 @@ export class UsuarioService {
     .then( (resp: any) => {
       this.usuario.img = resp.usuario.img;
       swal('Imagen Actualizada', this.usuario.nombre, 'success');
-      this.guardarStorage( id, this.token, this.usuario);
+      this.guardarStorage( id, this.token, this.usuario, this.menu );
     })
     .catch( resp => {
       console.log( resp );

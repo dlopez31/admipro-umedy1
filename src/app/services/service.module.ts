@@ -11,6 +11,7 @@ SubirArchivoService,
 HospitalService,
 MedicoService
 } from './service.index';
+import { AdminGuard } from './guards/admin.guard';
 
 @NgModule({
   declarations: [],
@@ -21,6 +22,7 @@ MedicoService
   providers: [
     SettingsService, SharedService, SidebarService,
     UsuarioService, LoginGuardGuard,
+    AdminGuard,
     SubirArchivoService,
     ModalUploadService,
     HospitalService,
