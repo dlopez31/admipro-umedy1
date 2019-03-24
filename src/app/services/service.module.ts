@@ -12,6 +12,7 @@ HospitalService,
 MedicoService
 } from './service.index';
 import { AdminGuard } from './guards/admin.guard';
+import { VerificaTokenGuard } from './guards/verifica-token.guard';
 
 @NgModule({
   declarations: [],
@@ -23,6 +24,7 @@ import { AdminGuard } from './guards/admin.guard';
     SettingsService, SharedService, SidebarService,
     UsuarioService, LoginGuardGuard,
     AdminGuard,
+    VerificaTokenGuard,
     SubirArchivoService,
     ModalUploadService,
     HospitalService,
